@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CardStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+}
+
+enum TransactionStatus {
+  STARTED
+  PENDING_VERIFICATION
+  COMPLETED
+  FAILED
+}
+
+model Gpa {
+  id        Int        @id @default(autoincrement())
+  balance   Float      @default(0)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  users     User[]
+  merchants Merchant[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  firstName String
+  lastName  String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cards     Card[]
+  gpaId     Int?
+  gpa       Gpa?     @relation(fields: [gpaId], references: [id])
+}
+
+model Card {
+  id           Int               @id @default(autoincrement())
+  cardNumber   String            @unique
+  expiration   DateTime
+  cvv          Int
+  status       CardStatus        @default(ACTIVE)
+  userId       Int
+  user         User              @relation(fields: [userId], references: [id])
+  mccs         MCC[]             @relation("CardMCC")
+  transactions CardTransaction[]
+}
+
+model Merchant {
+  id              Int               @id @default(autoincrement())
+  MID             String            @unique
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  gpaId           Int
+  gpa             Gpa              @relation(fields: [gpaId], references: [id])
+  mccId           Int
+  mcc             MCC               @relation(fields: [mccId], references: [id])
+  transactions    CardTransaction[]
+}
+
+model MCC {
+  id        Int        @id @default(autoincrement())
+  mccCode   String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  merchants Merchant[]
+  cards     Card[]     @relation("CardMCC")
+}
+
+model CardTransaction {
+  id          Int      @id @default(autoincrement())
+  amount      Float
+  cardId      Int
+  card        Card     @relation(fields: [cardId], references: [id])
+  merchantId  Int
+  merchant    Merchant @relation(fields: [merchantId], references: [id])
+  status      TransactionStatus @default(STARTED)
+  code        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

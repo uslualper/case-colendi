@@ -1,5 +1,7 @@
 # Colendi Case
 
+Don't forget to create the .env file
+
 http://localhost:3000/swagger
 
 ``
